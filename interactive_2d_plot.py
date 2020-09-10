@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+ #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Fri Aug 28 17:15:23 2020
@@ -10,7 +10,8 @@ Created on Fri Aug 28 17:15:23 2020
 
 
 def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
-                        inset_axes_side = 0.1, arrow_length = 0.1, figsize = (10,6), labels = None):
+                        inset_axes_side = 0.1, arrow_length = 0.1, figsize = (10,6), 
+                        labels = None, legend = None):
     """ Data are plotted in a 2D space, and when hovering over a point, further information about it (e.g. what image it is)  appears in an inset axes.  
     Inputs:
         xy | rank 2 array | e.g. 2x100, the x and y positions of each data
@@ -21,11 +22,14 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
         arrow_length | float | lenth of arrow from data point to inset axes, as a fraction of the full figure.  
         figsize | tuple |  standard Matplotlib figsize tuple, in inches.  
         labels | dict or None | title for title, xlabel for x axis label, and ylabel for y axis label
+        legend | dict or None | elements contains the matplotilb symbols.  E.g. for a blue circle: Line2D([0], [0], marker='o', color='w', markerfacecolor='#1f77b4')
+                                labels contains the strings for each of these.       
     Returns:
         Interactive figure
     History:
         2020/09/09 | MEG | Modified from a sript in the ICASAR package.  
         2020/09/10 | MEG | Add labels, and change so that images are stored as rank3 arrays.  
+        2020/09/10 | MEG | Add legend option.  
     
     """
     def remove_axes2_and_arrow(fig):
@@ -135,17 +139,18 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
     import matplotlib.pyplot as plt
     import matplotlib
 
-    # norm = plt.Normalize(1,4)
-    # cmap = plt.cm.RdYlGn
+    # 1: Check some inputs:
     if temporal_data is None and spatial_data is None:                                                                  # check inputs
         raise Exception("One of either spatial or temporal data must be supplied.  Exiting.  ")
     if temporal_data is not None and spatial_data is not None:
         raise Exception("Only either spatial or temporal data can be supplied, but not both.  Exiting.  ")
     
+    # 2: Draw the figure
     fig = plt.figure(figsize = figsize)                                             # create the figure, size set in function args.  
     axes1 = fig.add_axes([0.1, 0.1, 0.8, 0.8])                                      # main axes
-    sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100) #, cmap=cmap, norm=norm)
+    sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100)                                    # draw the scatter plot
 
+    # 3: Try and add various labels from the labels dict
     try:
         fig.canvas.set_window_title(labels['title'])
         fig.suptitle(labels['title'])
@@ -159,7 +164,12 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
         axes1.set_ylabel(labels['ylabel'])
     except:
         pass
-           
+    
+    # 4: Possibly add a legend, using the legend dict.  
+    if legend is not None:
+        axes1.legend(handles = legend['elements'], labels = legend['labels'], 
+                     bbox_to_anchor=(1., 0.5), loc = 'center right', bbox_transform=plt.gcf().transFigure)                           # Put a legend to the right of the current axis.  bbox is specified in figure coordinates.  
+              
     fig.canvas.mpl_connect("motion_notify_event", hover)                                # connect the figure and the function.  
 
 
@@ -167,6 +177,7 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
 
 import numpy as np
 import numpy.ma as ma
+from matplotlib.lines import Line2D                                  # for the manual legend
 
 xy = np.random.rand(2,15)
 time_courses = np.cumsum(np.random.randn(15,40), axis = 0)
@@ -176,11 +187,16 @@ c = np.random.randint(1,5,size=15)
 temporal_data = {'time_courses' : time_courses,
                  'xvals'        : xvals}
 
-labels = {'title' : 'Temporal Example',
+labels = {'title' : 'Temporal Example (with legend)',
           'xlabel' : 'x',
           'ylabel' : 'y'}
 
-exploratory_2d_plot(xy, c, temporal_data = temporal_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+legend = {'elements' : [Line2D([0], [0], marker='o', color='w', markerfacecolor='#1f77b4'),                                         # note that the legend has to be created manually.  
+                        Line2D([0], [0], marker='o', color='w', markerfacecolor='#ff7f0e')],
+          'labels'   : ['One', 'Two']}
+
+exploratory_2d_plot(xy, c, temporal_data = temporal_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), 
+                    labels = labels, legend = legend)
 
 
 #%% spatial data example
@@ -199,6 +215,32 @@ spatial_data = {'images_r3' : spatial_maps_r3_ma}
 labels['title'] = 'Spatial Example (with masked arrays)'
 
 exploratory_2d_plot(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+
+#%% Messing around with legends
+
+# import matplotlib.pyplot as plt
+# from matplotlib.lines import Line2D                                  # for the manual legend
+
+# legend_elements = [Line2D([0], [0], marker='o', color='w', markerfacecolor='#1f77b4'), 
+#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#ff7f0e'), 
+#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#2ca02c'), 
+#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#d62728'), 
+#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#9467bd')]
+
+# Iqs = np.arange(0,5)
+
+# legend_labels = []
+# for cluster_n, Iq in enumerate(Iqs):
+#     legend_labels.append(f'#: {cluster_n}\n Iq: {np.round(Iq, 2)} ')                                   # make a list of strings to name each cluster
+
+    
+# legend_labels.append('Noise')
+# legend_elements.append(Line2D([0], [0], marker='o', color='w', markerfacecolor='#c9c9c9'))              # but if we have 10 clusters (which is the max we plot), Noise must be added as the 11th
+
+# fig = plt.figure()
+# axes1 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
+# plt.legend(handles = legend_elements, labels = legend_labels, 
+#            bbox_to_anchor=(1., 0.5), loc = 'center right', bbox_transform=plt.gcf().transFigure)                           # Put a legend to the right of the current axis
 
 #%% Old version as a script.  
 #Version where the axes are drawn each time, using a more object orientated approach.  
