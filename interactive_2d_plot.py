@@ -9,7 +9,7 @@ Created on Fri Aug 28 17:15:23 2020
 #%% function attempt 
 
 
-def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
+def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
                         inset_axes_side = 0.1, arrow_length = 0.1, figsize = (10,6), 
                         labels = None, legend = None):
     """ Data are plotted in a 2D space, and when hovering over a point, further information about it (e.g. what image it is)  appears in an inset axes.  
@@ -195,7 +195,7 @@ legend = {'elements' : [Line2D([0], [0], marker='o', color='w', markerfacecolor=
                         Line2D([0], [0], marker='o', color='w', markerfacecolor='#ff7f0e')],
           'labels'   : ['One', 'Two']}
 
-exploratory_2d_plot(xy, c, temporal_data = temporal_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), 
+plot_2d_interactive_fig(xy, c, temporal_data = temporal_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), 
                     labels = labels, legend = legend)
 
 
@@ -205,7 +205,7 @@ spatial_maps_r3 = np.random.rand(15,100,100)                                    
 spatial_data = {'images_r3' : spatial_maps_r3}
 labels['title'] = 'Spatial Example'
 
-exploratory_2d_plot(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
 
 #%% Equally, the spatial data can be masked arrays
 
@@ -214,33 +214,8 @@ spatial_maps_r3_ma = ma.array(spatial_maps_r3, mask = np.repeat(mask[np.newaxis,
 spatial_data = {'images_r3' : spatial_maps_r3_ma}
 labels['title'] = 'Spatial Example (with masked arrays)'
 
-exploratory_2d_plot(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
 
-#%% Messing around with legends
-
-# import matplotlib.pyplot as plt
-# from matplotlib.lines import Line2D                                  # for the manual legend
-
-# legend_elements = [Line2D([0], [0], marker='o', color='w', markerfacecolor='#1f77b4'), 
-#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#ff7f0e'), 
-#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#2ca02c'), 
-#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#d62728'), 
-#                    Line2D([0], [0], marker='o', color='w', markerfacecolor='#9467bd')]
-
-# Iqs = np.arange(0,5)
-
-# legend_labels = []
-# for cluster_n, Iq in enumerate(Iqs):
-#     legend_labels.append(f'#: {cluster_n}\n Iq: {np.round(Iq, 2)} ')                                   # make a list of strings to name each cluster
-
-    
-# legend_labels.append('Noise')
-# legend_elements.append(Line2D([0], [0], marker='o', color='w', markerfacecolor='#c9c9c9'))              # but if we have 10 clusters (which is the max we plot), Noise must be added as the 11th
-
-# fig = plt.figure()
-# axes1 = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-# plt.legend(handles = legend_elements, labels = legend_labels, 
-#            bbox_to_anchor=(1., 0.5), loc = 'center right', bbox_transform=plt.gcf().transFigure)                           # Put a legend to the right of the current axis
 
 #%% Old version as a script.  
 #Version where the axes are drawn each time, using a more object orientated approach.  
