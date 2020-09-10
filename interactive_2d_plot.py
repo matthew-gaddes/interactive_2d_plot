@@ -5,11 +5,6 @@ Created on Fri Aug 28 17:15:23 2020
 
 @author: matthew
 """
-import sys
-sys.path.append('/home/matthew/university_work/python_stuff/python_scripts/')
-from small_plot_functions import matrix_show
-
-
 
 #%% function attempt 
 
@@ -20,17 +15,17 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
     Inputs:
         xy | rank 2 array | e.g. 2x100, the x and y positions of each data
         c | rank 1 array | e.g. 100, value used to set the colour of each data point
-        spatial_data | dict or None | contains 'images_r2' in which the images are stored as row vectors and 'mask', which converts a row vector back to a masked array
+        spatial_data | dict or None | contains 'images_r3' in which the images are stored as in a rank 3 array (e.g. n_images x heigh x width).  Masked arrays are supported.  
         temporal_data | dict or None | contains 'timecourses' as time signals as row vectors and 'xvals' which are the times for each item in the timecourse.   
         inset_axes_side | float | inset axes side length as a fraction of the full figure.  
         arrow_length | float | lenth of arrow from data point to inset axes, as a fraction of the full figure.  
         figsize | tuple |  standard Matplotlib figsize tuple, in inches.  
         labels | dict or None | title for title, xlabel for x axis label, and ylabel for y axis label
-
     Returns:
         Interactive figure
     History:
         2020/09/09 | MEG | Modified from a sript in the ICASAR package.  
+        2020/09/10 | MEG | Add labels, and change so that images are stored as rank3 arrays.  
     
     """
     def remove_axes2_and_arrow(fig):
@@ -99,24 +94,6 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
                 offsets.append(offset_length)
         return offsets
     
-    
-    def col_to_ma(col, pixel_mask):
-        """ A function to take a column vector and a 2d pixel mask and reshape the column into a masked array.  
-        Useful when converting between vectors used by BSS methods results that are to be plotted
-        Inputs:
-            col | rank 1 array | 
-            pixel_mask | array mask (rank 2)
-        Outputs:
-            source | rank 2 masked array | colun as a masked 2d array
-        """
-        import numpy.ma as ma 
-        import numpy as np
-        
-        source = ma.array(np.zeros(pixel_mask.shape), mask = pixel_mask )
-        source.unshare_mask()
-        source[~source.mask] = col.ravel()   
-        return source
-
     def hover(event):
         if event.inaxes == axes1:                                                       # determine if the mouse is in the axes
             cont, ind = sc.contains(event)                                              # cont is a boolean of if hoving on point, ind is a dictionary about the point being hovered over.  Note that two or more points can be in this.  
@@ -146,7 +123,7 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
                 if temporal_data is not None:
                     inset_axes.plot(temporal_data['xvals'], temporal_data['time_courses'][point_n,])                            # draw the inset axes time course graph
                 if spatial_data is not None:
-                    inset_axes.imshow(col_to_ma(spatial_data['images_r2'][point_n,], spatial_data['mask']))                  # or draw the inset axes image
+                    inset_axes.imshow(spatial_data['images_r3'][point_n,])                                                      # or draw the inset axes image
                 inset_axes.set_xticks([])                                                                                       # and remove ticks (and so labels too) from x
                 inset_axes.set_yticks([])                                                                                       # and from y
                 fig.canvas.draw_idle()                                                                                          # update the figure.  
@@ -169,19 +146,19 @@ def exploratory_2d_plot(xy, c, spatial_data = None, temporal_data = None,
     axes1 = fig.add_axes([0.1, 0.1, 0.8, 0.8])                                      # main axes
     sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100) #, cmap=cmap, norm=norm)
 
-    # try:
-    #     fig.canvas.set_window_title(labels['title'])
-    #     fig.suptitle(labels['title'])
-    # except:
-    #     pass
-    # try:
-    #     axes1.set_xlabel(labels['xlabel'])
-    # except:
-    #     pass
-    # try:
-    #     axes1.set_ylabel(labels['ylabel'])
-    # except:
-    #     pass
+    try:
+        fig.canvas.set_window_title(labels['title'])
+        fig.suptitle(labels['title'])
+    except:
+        pass
+    try:
+        axes1.set_xlabel(labels['xlabel'])
+    except:
+        pass
+    try:
+        axes1.set_ylabel(labels['ylabel'])
+    except:
+        pass
            
     fig.canvas.mpl_connect("motion_notify_event", hover)                                # connect the figure and the function.  
 
@@ -208,22 +185,18 @@ exploratory_2d_plot(xy, c, temporal_data = temporal_data, inset_axes_side = 0.1,
 
 #%% spatial data example
 
-spatial_maps = np.random.rand(15,100,100)
-
-mask = np.where(np.random.randint(0,2, (100,100)) == 1, np.ones((100,100)), np.zeros((100,100))).astype(bool)
-
-spatial_maps_ma = ma.array(spatial_maps, mask = np.repeat(mask[np.newaxis,], 15, axis = 0))
-
-n_pixs = len(ma.compressed(spatial_maps_ma[0,]))
-spatial_maps_r2 = np.zeros((15, n_pixs))
-
-for i in range(15):
-    spatial_maps_r2[i,] = ma.compressed(spatial_maps_ma[i,])
-    
-
-spatial_data = {'images_r2' : spatial_maps_r2,
-                'mask'   : mask}
+spatial_maps_r3 = np.random.rand(15,100,100)                                                                # r3 to signify that it's rank3 (n_images x Y x X)   
+spatial_data = {'images_r3' : spatial_maps_r3}
 labels['title'] = 'Spatial Example'
+
+exploratory_2d_plot(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+
+#%% Equally, the spatial data can be masked arrays
+
+mask = np.where(np.random.randint(0,2, (100,100)) == 1, np.ones((100,100)), np.zeros((100,100))).astype(bool)                           # create a random boolean mask
+spatial_maps_r3_ma = ma.array(spatial_maps_r3, mask = np.repeat(mask[np.newaxis,], 15, axis = 0))                                          # apply it to the images, making it a masked array
+spatial_data = {'images_r3' : spatial_maps_r3_ma}
+labels['title'] = 'Spatial Example (with masked arrays)'
 
 exploratory_2d_plot(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
 
