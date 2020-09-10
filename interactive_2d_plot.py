@@ -17,7 +17,7 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
         xy | rank 2 array | e.g. 2x100, the x and y positions of each data
         c | rank 1 array | e.g. 100, value used to set the colour of each data point
         spatial_data | dict or None | contains 'images_r3' in which the images are stored as in a rank 3 array (e.g. n_images x heigh x width).  Masked arrays are supported.  
-        temporal_data | dict or None | contains 'timecourses' as time signals as row vectors and 'xvals' which are the times for each item in the timecourse.   
+        temporal_data | dict or None | contains 'tcs_r2' as time signals as row vectors and 'xvals' which are the times for each item in the timecourse.   
         inset_axes_side | float | inset axes side length as a fraction of the full figure.  
         arrow_length | float | lenth of arrow from data point to inset axes, as a fraction of the full figure.  
         figsize | tuple |  standard Matplotlib figsize tuple, in inches.  
@@ -125,7 +125,7 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
                 
                 # 3: Plot on the inset axes
                 if temporal_data is not None:
-                    inset_axes.plot(temporal_data['xvals'], temporal_data['time_courses'][point_n,])                            # draw the inset axes time course graph
+                    inset_axes.plot(temporal_data['xvals'], temporal_data['tcs_r2'][point_n,])                            # draw the inset axes time course graph
                 if spatial_data is not None:
                     inset_axes.imshow(spatial_data['images_r3'][point_n,])                                                      # or draw the inset axes image
                 inset_axes.set_xticks([])                                                                                       # and remove ticks (and so labels too) from x
@@ -184,7 +184,7 @@ time_courses = np.cumsum(np.random.randn(15,40), axis = 0)
 xvals = np.arange(0,40)
 c = np.random.randint(1,5,size=15)
 
-temporal_data = {'time_courses' : time_courses,
+temporal_data = {'tcs_r2' : time_courses,
                  'xvals'        : xvals}
 
 labels = {'title' : 'Temporal Example (with legend)',
