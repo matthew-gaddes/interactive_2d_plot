@@ -7,3 +7,6 @@ Each data point can either be spatial data:
 
 Or temporal data:
 ![temporal](https://user-images.githubusercontent.com/10498635/92724204-23220c80-f362-11ea-8770-b501d7cd03e1.png)
+
+Different marker styles are also supported:
+![marker_styles](https://user-images.githubusercontent.com/10498635/92918420-4cf13700-f427-11ea-8930-20da2a89c9f5.png)
