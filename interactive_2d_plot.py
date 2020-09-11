@@ -11,7 +11,7 @@ Created on Fri Aug 28 17:15:23 2020
 
 def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
                         inset_axes_side = 0.1, arrow_length = 0.1, figsize = (10,6), 
-                        labels = None, legend = None):
+                        labels = None, legend = None, markers = None):
     """ Data are plotted in a 2D space, and when hovering over a point, further information about it (e.g. what image it is)  appears in an inset axes.  
     Inputs:
         xy | rank 2 array | e.g. 2x100, the x and y positions of each data
@@ -24,12 +24,15 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
         labels | dict or None | title for title, xlabel for x axis label, and ylabel for y axis label
         legend | dict or None | elements contains the matplotilb symbols.  E.g. for a blue circle: Line2D([0], [0], marker='o', color='w', markerfacecolor='#1f77b4')
                                 labels contains the strings for each of these.       
-    Returns:
+        markers | dict or None | dictionary containing labels (a numpy array where each number relates to a different marker style e.g. (1,0,1,0,0,0,1 etc))) 
+                                 and markers (a list of the different Matplotlib marker styles e.g. ['o', 'x'])
+             Returns:
         Interactive figure
     History:
         2020/09/09 | MEG | Modified from a sript in the ICASAR package.  
         2020/09/10 | MEG | Add labels, and change so that images are stored as rank3 arrays.  
         2020/09/10 | MEG | Add legend option.  
+        2020/09/11 | MEG | Add option to have different markers.  
     
     """
     def remove_axes2_and_arrow(fig):
@@ -88,7 +91,7 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
         History:
             2020/09/08 | MEG | Written
         """
-        
+        import numpy as np
         offsets = []
         for dim_n in range(len(lims)):                                        # loop through each dimension.  
             dim_centre = np.mean(lims[dim_n])
@@ -148,8 +151,15 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
     # 2: Draw the figure
     fig = plt.figure(figsize = figsize)                                             # create the figure, size set in function args.  
     axes1 = fig.add_axes([0.1, 0.1, 0.8, 0.8])                                      # main axes
-    sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100)                                    # draw the scatter plot
-
+    if markers is None:                                                             # if a dictionary about different markers is not supplied, 
+        sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100)                                # draw the scatter plot, just draw them all with the default maker
+    else:                                                                                                                           # but if we do have a dictionary of markers.  
+        n_markers = len(markers['styles'])                                                                                          # get the number of unique markers
+        for n_marker in range(n_markers):                                                                                           # loop through each marker style
+            point_args = np.argwhere(markers['labels'] == n_marker)                                                                 # get which points have that marker style
+            sc = axes1.scatter(xy[0,point_args],xy[1,point_args],c=c[point_args], s=100, marker = markers['styles'][n_marker])      # draw the scatter plot with different marker styles
+        sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100, alpha = 0.0)                                                                   # draw the scatter plot again, but with invisble markers.  As the last to be drawn, these are the ones that 
+                                                                                                                                    # are hovered over, and indexing works as all the points are draw this time.  
     # 3: Try and add various labels from the labels dict
     try:
         fig.canvas.set_window_title(labels['title'])
@@ -179,6 +189,8 @@ import numpy as np
 import numpy.ma as ma
 from matplotlib.lines import Line2D                                  # for the manual legend
 
+np.random.seed(0)                                                           # to make reproducible.  
+
 xy = np.random.rand(2,15)
 time_courses = np.cumsum(np.random.randn(15,40), axis = 0)
 xvals = np.arange(0,40)
@@ -187,7 +199,7 @@ c = np.random.randint(1,5,size=15)
 temporal_data = {'tcs_r2' : time_courses,
                  'xvals'        : xvals}
 
-labels = {'title' : 'Temporal Example (with legend)',
+labels = {'title' : '01 Temporal Example (with legend)',
           'xlabel' : 'x',
           'ylabel' : 'y'}
 
@@ -203,7 +215,7 @@ plot_2d_interactive_fig(xy, c, temporal_data = temporal_data, inset_axes_side = 
 
 spatial_maps_r3 = np.random.rand(15,100,100)                                                                # r3 to signify that it's rank3 (n_images x Y x X)   
 spatial_data = {'images_r3' : spatial_maps_r3}
-labels['title'] = 'Spatial Example'
+labels['title'] = '02 Spatial Example'
 
 plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
 
@@ -212,10 +224,18 @@ plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.
 mask = np.where(np.random.randint(0,2, (100,100)) == 1, np.ones((100,100)), np.zeros((100,100))).astype(bool)                           # create a random boolean mask
 spatial_maps_r3_ma = ma.array(spatial_maps_r3, mask = np.repeat(mask[np.newaxis,], 15, axis = 0))                                          # apply it to the images, making it a masked array
 spatial_data = {'images_r3' : spatial_maps_r3_ma}
-labels['title'] = 'Spatial Example (with masked arrays)'
+labels['title'] = '03 Spatial Example (with masked arrays)'
 
 plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
 
+#%% Also, a dictionary of marker styles can be supplied.
+    
+markers = {'labels'  : np.random.randint(0,2, (15)),                                            # label number will set the marker style.  ie lable 0 is the first style in styles
+           'styles' : ['o', 'x'] }                                                              # matplotlib marker styles.  
+labels['title'] = '04 Spatial Example (with different marker styles)'
+
+plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, 
+                        figsize = (10,6), labels = labels, markers = markers)
 
 #%% Old version as a script.  
 #Version where the axes are drawn each time, using a more object orientated approach.  
