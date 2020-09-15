@@ -8,17 +8,16 @@ Created on Fri Aug 28 17:15:23 2020
 
 #%% function attempt 
 
-
-def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
-                        inset_axes_side = 0.1, arrow_length = 0.1, figsize = (10,6), 
+def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = None,
+                        inset_axes_side = {'x':0.1, 'y':0.1}, arrow_length = 0.1, figsize = (10,6), 
                         labels = None, legend = None, markers = None):
     """ Data are plotted in a 2D space, and when hovering over a point, further information about it (e.g. what image it is)  appears in an inset axes.  
     Inputs:
         xy | rank 2 array | e.g. 2x100, the x and y positions of each data
-        c | rank 1 array | e.g. 100, value used to set the colour of each data point
+        colours | rank 1 array | e.g. 100, value used to set the colour of each data point
         spatial_data | dict or None | contains 'images_r3' in which the images are stored as in a rank 3 array (e.g. n_images x heigh x width).  Masked arrays are supported.  
         temporal_data | dict or None | contains 'tcs_r2' as time signals as row vectors and 'xvals' which are the times for each item in the timecourse.   
-        inset_axes_side | float | inset axes side length as a fraction of the full figure.  
+        inset_axes_side | dict | inset axes side length as a fraction of the full figure, in x and y direction
         arrow_length | float | lenth of arrow from data point to inset axes, as a fraction of the full figure.  
         figsize | tuple |  standard Matplotlib figsize tuple, in inches.  
         labels | dict or None | title for title, xlabel for x axis label, and ylabel for y axis label
@@ -117,14 +116,18 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
                 # 2: Add the inset axes                
                 fig_x = axes_data_to_fig_percent(axes1.get_xlim(), (0.1, 0.9), xy[0,point_n] + arrow_lengths[0])                   # convert position on axes to position in figure, ready to add the inset axes
                 fig_y = axes_data_to_fig_percent(axes1.get_ylim(), (0.1, 0.9), xy[1,point_n] + arrow_lengths[1])                   # ditto for y dimension
-                if arrow_lengths[0] > 0 and arrow_lengths[1] > 0:                                                                    # top right quadrant
-                    inset_axes = fig.add_axes([fig_x, fig_y, inset_axes_side, inset_axes_side], anchor = 'SW')                       # create the inset axes, simple case, anochored to lower left forner
-                elif arrow_lengths[0] < 0 and arrow_lengths[1] > 0:                                                                  # top left quadrant
-                    inset_axes = fig.add_axes([fig_x - inset_axes_side, fig_y, inset_axes_side, inset_axes_side], anchor = 'SE')     # create the inset axes, nudged in x direction, anchored to lower right corner
-                elif arrow_lengths[0] > 0 and arrow_lengths[1] < 0:                                                                  # lower right quadrant
-                    inset_axes = fig.add_axes([fig_x, fig_y - inset_axes_side, inset_axes_side, inset_axes_side], anchor = 'NW')     # create the inset axes, nudged in y direction
-                else:
-                    inset_axes = fig.add_axes([fig_x - inset_axes_side, fig_y - inset_axes_side, inset_axes_side, inset_axes_side], anchor = 'NE')  # create the inset axes, nudged in both x and y
+                if arrow_lengths[0] > 0 and arrow_lengths[1] > 0:                                                          # top right quadrant
+                    inset_axes = fig.add_axes([fig_x, fig_y,                                                               # create the inset axes, simple case, anochored to lower left forner
+                                               inset_axes_side['x'], inset_axes_side['y']], anchor = 'SW')               
+                elif arrow_lengths[0] < 0 and arrow_lengths[1] > 0:                                                        # top left quadrant
+                    inset_axes = fig.add_axes([fig_x - inset_axes_side['x'], fig_y,                                        # create the inset axes, nudged in x direction, anchored to lower right corner
+                                               inset_axes_side['x'], inset_axes_side['y']], anchor = 'SE')     
+                elif arrow_lengths[0] > 0 and arrow_lengths[1] < 0:                                                        # lower right quadrant
+                    inset_axes = fig.add_axes([fig_x, fig_y - inset_axes_side['y'],                                        # create the inset axes, nudged in y direction
+                                               inset_axes_side['x'], inset_axes_side['y']], anchor = 'NW')                 
+                else:                                                                                                      # lower left quadrant
+                    inset_axes = fig.add_axes([fig_x - inset_axes_side['x'], fig_y - inset_axes_side['y'],                 # create the inset axes, nudged in both x and y
+                                               inset_axes_side['x'], inset_axes_side['y']], anchor = 'NE')                
                 
                 # 3: Plot on the inset axes
                 if temporal_data is not None:
@@ -141,12 +144,15 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
     
     import matplotlib.pyplot as plt
     import matplotlib
+    import numpy as np
 
     # 1: Check some inputs:
     if temporal_data is None and spatial_data is None:                                                                  # check inputs
         raise Exception("One of either spatial or temporal data must be supplied.  Exiting.  ")
     if temporal_data is not None and spatial_data is not None:
         raise Exception("Only either spatial or temporal data can be supplied, but not both.  Exiting.  ")
+    
+    
     
     # 2: Draw the figure
     fig = plt.figure(figsize = figsize)                                             # create the figure, size set in function args.  
@@ -156,9 +162,9 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
     else:                                                                                                                           # but if we do have a dictionary of markers.  
         n_markers = len(markers['styles'])                                                                                          # get the number of unique markers
         for n_marker in range(n_markers):                                                                                           # loop through each marker style
-            point_args = np.argwhere(markers['labels'] == n_marker)                                                                 # get which points have that marker style
-            sc = axes1.scatter(xy[0,point_args],xy[1,point_args],c=c[point_args], s=100, marker = markers['styles'][n_marker])      # draw the scatter plot with different marker styles
-        sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100, alpha = 0.0)                                                                   # draw the scatter plot again, but with invisble markers.  As the last to be drawn, these are the ones that 
+            point_args = np.ravel(np.argwhere(markers['labels'] == n_marker))                                                                 # get which points have that marker style
+            sc = axes1.scatter(xy[0,point_args],xy[1,point_args],c=colours[point_args], s=100, marker = markers['styles'][n_marker])      # draw the scatter plot with different marker styles
+        sc = axes1.scatter(xy[0,],xy[1,],c=colours, s=100, alpha = 0.0)                                                                   # draw the scatter plot again, but with invisble markers.  As the last to be drawn, these are the ones that 
                                                                                                                                     # are hovered over, and indexing works as all the points are draw this time.  
     # 3: Try and add various labels from the labels dict
     try:
@@ -181,7 +187,6 @@ def plot_2d_interactive_fig(xy, c, spatial_data = None, temporal_data = None,
                      bbox_to_anchor=(1., 0.5), loc = 'center right', bbox_transform=plt.gcf().transFigure)                           # Put a legend to the right of the current axis.  bbox is specified in figure coordinates.  
               
     fig.canvas.mpl_connect("motion_notify_event", hover)                                # connect the figure and the function.  
-
 
 #%% temporal data example
 
@@ -207,8 +212,8 @@ legend = {'elements' : [Line2D([0], [0], marker='o', color='w', markerfacecolor=
                         Line2D([0], [0], marker='o', color='w', markerfacecolor='#ff7f0e')],
           'labels'   : ['One', 'Two']}
 
-plot_2d_interactive_fig(xy, c, temporal_data = temporal_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), 
-                    labels = labels, legend = legend)
+plot_2d_interactive_fig(xy, c, temporal_data = temporal_data, inset_axes_side = {'x':0.3, 'y':0.1}, arrow_length = 0.05, figsize = (10,6), 
+                    labels = labels, legend = legend)                                                                                               # note we can make the inset axes rectuangular with the inset_axes_side dict
 
 
 #%% spatial data example
@@ -217,7 +222,7 @@ spatial_maps_r3 = np.random.rand(15,100,100)                                    
 spatial_data = {'images_r3' : spatial_maps_r3}
 labels['title'] = '02 Spatial Example'
 
-plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = {'x':0.1, 'y':0.1}, arrow_length = 0.05, figsize = (10,6), labels = labels)       # or we can make the inset axes square
 
 #%% Equally, the spatial data can be masked arrays
 
@@ -226,7 +231,7 @@ spatial_maps_r3_ma = ma.array(spatial_maps_r3, mask = np.repeat(mask[np.newaxis,
 spatial_data = {'images_r3' : spatial_maps_r3_ma}
 labels['title'] = '03 Spatial Example (with masked arrays)'
 
-plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, figsize = (10,6), labels = labels)
+plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = {'x':0.1, 'y':0.1}, arrow_length = 0.05, figsize = (10,6), labels = labels)
 
 #%% Also, a dictionary of marker styles can be supplied.
     
@@ -234,7 +239,7 @@ markers = {'labels'  : np.random.randint(0,2, (15)),                            
            'styles' : ['o', 'x'] }                                                              # matplotlib marker styles.  
 labels['title'] = '04 Spatial Example (with different marker styles)'
 
-plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = 0.1, arrow_length = 0.05, 
+plot_2d_interactive_fig(xy, c, spatial_data = spatial_data, inset_axes_side = {'x':0.1, 'y':0.1}, arrow_length = 0.05, 
                         figsize = (10,6), labels = labels, markers = markers)
 
 #%% Old version as a script.  
