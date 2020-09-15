@@ -32,6 +32,7 @@ def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = No
         2020/09/10 | MEG | Add labels, and change so that images are stored as rank3 arrays.  
         2020/09/10 | MEG | Add legend option.  
         2020/09/11 | MEG | Add option to have different markers.  
+        2020/09/15 | MEG | Add option to set size of inset axes.  
     
     """
     def remove_axes2_and_arrow(fig):
@@ -158,7 +159,7 @@ def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = No
     fig = plt.figure(figsize = figsize)                                             # create the figure, size set in function args.  
     axes1 = fig.add_axes([0.1, 0.1, 0.8, 0.8])                                      # main axes
     if markers is None:                                                             # if a dictionary about different markers is not supplied, 
-        sc = axes1.scatter(xy[0,],xy[1,],c=c, s=100)                                # draw the scatter plot, just draw them all with the default maker
+        sc = axes1.scatter(xy[0,],xy[1,],c=colours, s=100)                                # draw the scatter plot, just draw them all with the default maker
     else:                                                                                                                           # but if we do have a dictionary of markers.  
         n_markers = len(markers['styles'])                                                                                          # get the number of unique markers
         for n_marker in range(n_markers):                                                                                           # loop through each marker style
