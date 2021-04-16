@@ -10,7 +10,8 @@ Created on Fri Aug 28 17:15:23 2020
 
 def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = None,
                         inset_axes_side = {'x':0.1, 'y':0.1}, arrow_length = 0.1, figsize = (10,6), 
-                        labels = None, legend = None, markers = None):
+                        labels = None, legend = None, markers = None, 
+                        figures = 'window', png_path = './', fig_filename = '2d_interactive_plot'):
     """ Data are plotted in a 2D space, and when hovering over a point, further information about it (e.g. what image it is)  appears in an inset axes.  
     Inputs:
         xy | rank 2 array | e.g. 2x100, the x and y positions of each data
@@ -25,7 +26,10 @@ def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = No
                                 labels contains the strings for each of these.       
         markers | dict or None | dictionary containing labels (a numpy array where each number relates to a different marker style e.g. (1,0,1,0,0,0,1 etc))) 
                                  and markers (a list of the different Matplotlib marker styles e.g. ['o', 'x'])
-             Returns:
+        figures | string,  "window" / "png" / "png+window" | controls if figures are produced (either as a window, saved as a png, or both)
+        png_path | string | if a png is to be saved, a path to a folder can be supplied, or left as default to write to current directory.  
+        fig_filename | string | name of file, if you wish to set one.  Doesn't include the extension (as it's always a png).  
+     Returns:
         Interactive figure
     History:
         2020/09/09 | MEG | Modified from a sript in the ICASAR package.  
@@ -33,6 +37,7 @@ def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = No
         2020/09/10 | MEG | Add legend option.  
         2020/09/11 | MEG | Add option to have different markers.  
         2020/09/15 | MEG | Add option to set size of inset axes.  
+        2021_04_16 | MEG | Add figures option (png, png and window, or just window), option to save to a directory, and option to set filename.  
     
     """
     def remove_axes2_and_arrow(fig):
@@ -188,6 +193,16 @@ def plot_2d_interactive_fig(xy, colours, spatial_data = None, temporal_data = No
                      bbox_to_anchor=(1., 0.5), loc = 'center right', bbox_transform=plt.gcf().transFigure)                           # Put a legend to the right of the current axis.  bbox is specified in figure coordinates.  
               
     fig.canvas.mpl_connect("motion_notify_event", hover)                                # connect the figure and the function.  
+    
+    if figures == 'window':
+        pass
+    elif figures == "png":
+        fig.savefig(f"{png_path}/{fig_filename}.png")
+        plt.close()
+    elif figures == 'png+window':
+        fig.savefig(f"{png_path}/{fig_filename}.png")
+    else:
+        pass
 
 #%% temporal data example
 
